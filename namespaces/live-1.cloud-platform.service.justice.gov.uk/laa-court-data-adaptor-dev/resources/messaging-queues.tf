@@ -1,18 +1,18 @@
-module "create_link_queue_m" {
+module "link_queue" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-sqs?ref=4.3"
 
   environment-name          = var.environment_name
   team_name                 = var.team_name
   infrastructure-support    = var.infrastructure_support
   application               = var.application
-  sqs_name                  = "create-link-queue-m"
+  sqs_name                  = "link-queue"
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
 
   redrive_policy = <<EOF
   {
-    "deadLetterTargetArn": "${module.create_link_queue_m_dead_letter_queue.sqs_arn}","maxReceiveCount": 3
+    "deadLetterTargetArn": "${module.link_queue_dead_letter_queue.sqs_arn}","maxReceiveCount": 3
   }
   EOF
 
@@ -22,27 +22,27 @@ module "create_link_queue_m" {
 }
 
 
-resource "aws_sqs_queue_policy" "create_link_queue_m_policy" {
-  queue_url = module.create_link_queue_m.sqs_id
+resource "aws_sqs_queue_policy" "link_queue_policy" {
+  queue_url = module.link_queue.sqs_id
 
   policy = <<EOF
   {
     "Version": "2012-10-17",
-    "Id": "${module.create_link_queue_m.sqs_arn}/SQSDefaultPolicy",
+    "Id": "${module.link_queue.sqs_arn}/SQSDefaultPolicy",
     "Statement":
       [
         {
           "Sid": "PublishPolicy",
           "Effect": "Allow",
           "Principal": {"AWS": "*"},
-          "Resource": "${module.create_link_queue_m.sqs_arn}",
+          "Resource": "${module.link_queue.sqs_arn}",
           "Action": "sqs:SendMessage"
         },
         {
           "Sid": "ConsumePolicy",
           "Effect": "Allow",
           "Principal": {"AWS": "*"},
-          "Resource": "${module.create_link_queue_m.sqs_arn}",
+          "Resource": "${module.link_queue.sqs_arn}",
           "Action": "sqs:ReceiveMessage"
         }
       ]
@@ -50,15 +50,15 @@ resource "aws_sqs_queue_policy" "create_link_queue_m_policy" {
    EOF
 }
 
-module "create_link_queue_m_dead_letter_queue" {
+module "link_queue_dead_letter_queue" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-sqs?ref=4.3"
 
   environment-name       = var.environment_name
   team_name              = var.team_name
   infrastructure-support = var.infrastructure_support
   application            = var.application
-  sqs_name               = "create-link-queue-dl-m"
-  existing_user_name     = module.create_link_queue_m.user_name
+  sqs_name               = "link-queue-dl"
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -75,7 +75,7 @@ module "unlink_queue_m" {
   infrastructure-support    = var.infrastructure_support
   application               = var.application
   sqs_name                  = "unlink-queue-m"
-  existing_user_name        = module.create_link_queue_m.user_name
+  existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
@@ -127,7 +127,7 @@ module "unlink_queue_m_dead_letter_queue" {
   infrastructure-support = var.infrastructure_support
   application            = var.application
   sqs_name               = "unlink-queue-dl-m"
-  existing_user_name     = module.create_link_queue_m.user_name
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -144,7 +144,7 @@ module "hearing_resulted_queue" {
   infrastructure-support    = var.infrastructure_support
   application               = var.application
   sqs_name                  = "hearing-resulted-queue"
-  existing_user_name        = module.create_link_queue_m.user_name
+  existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
@@ -196,7 +196,7 @@ module "hearing_resulted_dead_letter_queue" {
   infrastructure-support = var.infrastructure_support
   application            = var.application
   sqs_name               = "hearing-resulted-queue-dl"
-  existing_user_name     = module.create_link_queue_m.user_name
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -213,7 +213,7 @@ module "cp_laa_status_job_queue" {
   infrastructure-support    = var.infrastructure_support
   application               = var.application
   sqs_name                  = "cp-laa-status-job-queue"
-  existing_user_name        = module.create_link_queue_m.user_name
+  existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
@@ -265,7 +265,7 @@ module "cp_laa_status_job_dead_letter_queue" {
   infrastructure-support = var.infrastructure_support
   application            = var.application
   sqs_name               = "cp-laa-status-job-queue-dl"
-  existing_user_name     = module.create_link_queue_m.user_name
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -282,7 +282,7 @@ module "create_link_cp_status_job_queue" {
   infrastructure-support    = var.infrastructure_support
   application               = var.application
   sqs_name                  = "create-link-cp-status-job-queue"
-  existing_user_name        = module.create_link_queue_m.user_name
+  existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
@@ -334,7 +334,7 @@ module "create_link_cp_status_job_dead_letter_queue" {
   infrastructure-support = var.infrastructure_support
   application            = var.application
   sqs_name               = "create-link-cp-status-job-queue-dl"
-  existing_user_name     = module.create_link_queue_m.user_name
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -351,7 +351,7 @@ module "prosecution_concluded_queue" {
   infrastructure-support    = var.infrastructure_support
   application               = var.application
   sqs_name                  = "prosecution-concluded-queue"
-  existing_user_name        = module.create_link_queue_m.user_name
+  existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
   namespace                 = var.namespace
@@ -375,7 +375,7 @@ module "prosecution_concluded_dl_queue" {
   infrastructure-support = var.infrastructure_support
   application            = var.application
   sqs_name               = "prosecution-concluded-queue-dl"
-  existing_user_name     = module.create_link_queue_m.user_name
+  existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
 
@@ -416,18 +416,18 @@ resource "aws_sqs_queue_policy" "prosecution_concluded_queue_policy" {
    EOF
 }
 
-resource "kubernetes_secret" "create_link_queue_m" {
+resource "kubernetes_secret" "link_queue" {
   metadata {
     name      = "cda-messaging-queues-output"
     namespace = var.namespace
   }
 
   data = {
-    access_key_id                        = module.create_link_queue_m.access_key_id
-    secret_access_key                    = module.create_link_queue_m.secret_access_key
-    sqs_url_link                         = module.create_link_queue_m.sqs_id
-    sqs_arn_link                         = module.create_link_queue_m.sqs_arn
-    sqs_name_link                        = module.create_link_queue_m.sqs_name
+    access_key_id                        = module.link_queue.access_key_id
+    secret_access_key                    = module.link_queue.secret_access_key
+    sqs_url_link                         = module.link_queue.sqs_id
+    sqs_arn_link                         = module.link_queue.sqs_arn
+    sqs_name_link                        = module.link_queue.sqs_name
     sqs_url_d_link                       = module.create_link_queue_m_dead_letter_queue.sqs_id
     sqs_arn_d_link                       = module.create_link_queue_m_dead_letter_queue.sqs_arn
     sqs_name_d_link                      = module.create_link_queue_m_dead_letter_queue.sqs_name
