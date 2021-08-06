@@ -67,14 +67,14 @@ module "link_queue_dead_letter_queue" {
   }
 }
 
-module "unlink_queue_m" {
+module "unlink_queue" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-sqs?ref=4.3"
 
   environment-name          = var.environment_name
   team_name                 = var.team_name
   infrastructure-support    = var.infrastructure_support
   application               = var.application
-  sqs_name                  = "unlink-queue-m"
+  sqs_name                  = "unlink-queue"
   existing_user_name        = module.link_queue.user_name
   encrypt_sqs_kms           = var.encrypt_sqs_kms
   message_retention_seconds = var.message_retention_seconds
@@ -82,7 +82,7 @@ module "unlink_queue_m" {
 
   redrive_policy = <<EOF
   {
-    "deadLetterTargetArn": "${module.unlink_queue_m_dead_letter_queue.sqs_arn}","maxReceiveCount": 3
+    "deadLetterTargetArn": "${module.unlink_queue_dead_letter_queue.sqs_arn}","maxReceiveCount": 3
   }
   EOF
 
@@ -91,27 +91,27 @@ module "unlink_queue_m" {
   }
 }
 
-resource "aws_sqs_queue_policy" "unlink_queue_m_policy" {
-  queue_url = module.unlink_queue_m.sqs_id
+resource "aws_sqs_queue_policy" "unlink_queue_policy" {
+  queue_url = module.unlink_queue.sqs_id
 
   policy = <<EOF
   {
     "Version": "2012-10-17",
-    "Id": "${module.unlink_queue_m.sqs_arn}/SQSDefaultPolicy",
+    "Id": "${module.unlink_queue.sqs_arn}/SQSDefaultPolicy",
     "Statement":
       [
         {
           "Sid": "PublishPolicy",
           "Effect": "Allow",
           "Principal": {"AWS": "*"},
-          "Resource": "${module.unlink_queue_m.sqs_arn}",
+          "Resource": "${module.unlink_queue.sqs_arn}",
           "Action": "sqs:SendMessage"
         },
         {
           "Sid": "ConsumePolicy",
           "Effect": "Allow",
           "Principal": {"AWS": "*"},
-          "Resource": "${module.unlink_queue_m.sqs_arn}",
+          "Resource": "${module.unlink_queue.sqs_arn}",
           "Action": "sqs:ReceiveMessage"
         }
       ]
@@ -119,14 +119,14 @@ resource "aws_sqs_queue_policy" "unlink_queue_m_policy" {
    EOF
 }
 
-module "unlink_queue_m_dead_letter_queue" {
+module "unlink_queue_dead_letter_queue" {
   source = "github.com/ministryofjustice/cloud-platform-terraform-sqs?ref=4.3"
 
   environment-name       = var.environment_name
   team_name              = var.team_name
   infrastructure-support = var.infrastructure_support
   application            = var.application
-  sqs_name               = "unlink-queue-dl-m"
+  sqs_name               = "unlink-queue-dl"
   existing_user_name     = module.link_queue.user_name
   encrypt_sqs_kms        = var.encrypt_sqs_kms
   namespace              = var.namespace
@@ -431,12 +431,12 @@ resource "kubernetes_secret" "link_queue" {
     sqs_url_d_link                       = module.create_link_queue_m_dead_letter_queue.sqs_id
     sqs_arn_d_link                       = module.create_link_queue_m_dead_letter_queue.sqs_arn
     sqs_name_d_link                      = module.create_link_queue_m_dead_letter_queue.sqs_name
-    sqs_url_unlink                       = module.unlink_queue_m.sqs_id
-    sqs_arn_unlink                       = module.unlink_queue_m.sqs_arn
-    sqs_name_unlink                      = module.unlink_queue_m.sqs_name
-    sqs_url_d_unlink                     = module.unlink_queue_m_dead_letter_queue.sqs_id
-    sqs_arn_d_unlink                     = module.unlink_queue_m_dead_letter_queue.sqs_arn
-    sqs_name_d_unlink                    = module.unlink_queue_m_dead_letter_queue.sqs_name
+    sqs_url_unlink                       = module.unlink_queue.sqs_id
+    sqs_arn_unlink                       = module.unlink_queue.sqs_arn
+    sqs_name_unlink                      = module.unlink_queue.sqs_name
+    sqs_url_d_unlink                     = module.unlink_queue_dead_letter_queue.sqs_id
+    sqs_arn_d_unlink                     = module.unlink_queue_dead_letter_queue.sqs_arn
+    sqs_name_d_unlink                    = module.unlink_queue_dead_letter_queue.sqs_name
     sqs_url_hearing_resulted             = module.hearing_resulted_queue.sqs_id
     sqs_arn_hearing_resulted             = module.hearing_resulted_queue.sqs_arn
     sqs_name_hearing_resulted            = module.hearing_resulted_queue.sqs_name
